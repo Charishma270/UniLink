@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UniLink Admin Console</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="hero__glow" aria-hidden="true"></div>
+      <div class="hero__bar">
+        <span class="hero__eyebrow">Admin Console</span>
+        <a class="hero__link" href="index.html">Back to Roles</a>
+      </div>
+      <h1 class="hero__title">Admin Control Center</h1>
+      <p class="hero__subtitle">
+        Review event submissions, publish approved posts, and keep UniLink safe.
+      </p>
+      <div class="hero__summary" id="summary">0 pending</div>
+    </header>
+
+    <section class="admin" aria-label="Admin Tools">
+      <div class="panel">
+        <h2 class="panel__title">Pending Event Approvals</h2>
+        <div id="pendingList" class="events__grid"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel__title">Recent Decisions</h2>
+        <div id="recentList" class="events__grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UniLink Student Hub</title>
+  <link rel="stylesheet" href="student.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="hero__glow" aria-hidden="true"></div>
+      <div class="hero__bar">
+        <span class="hero__eyebrow">UniLink Student</span>
+        <a class="hero__link" href="index.html">Back to Roles</a>
+      </div>
+      <h1 class="hero__title">Campus Events Feed</h1>
+      <p class="hero__subtitle">
+        Explore every event posted by club pages. Search, filter, and pick your next experience.
+      </p>
+      <div class="search">
+        <input id="search" class="search__input" type="search" placeholder="Search by club, event, or tag" />
+        <span id="count" class="search__count">0 events</span>
+      </div>
+    </header>
+
+    <section class="events" aria-label="Club Events">
+      <div id="events" class="events__grid"></div>
+    </section>
+  </main>
+
+  <script src="student.js"></script>
+</body>
+</html>

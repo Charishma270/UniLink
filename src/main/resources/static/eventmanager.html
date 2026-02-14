@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UniLink Event Manager</title>
+  <link rel="stylesheet" href="eventmanager.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="hero__glow" aria-hidden="true"></div>
+      <div class="hero__bar">
+        <span class="hero__eyebrow">Event Manager</span>
+        <a class="hero__link" href="index.html">Back to Roles</a>
+      </div>
+      <h1 class="hero__title">Event Manager Studio</h1>
+      <p class="hero__subtitle">
+        Create new events, manage your club posts, and send them for admin approval.
+      </p>
+      <div class="hero__summary" id="summary">0 events</div>
+    </header>
+
+    <section class="manager" aria-label="Event Manager Tools">
+      <form id="eventForm" class="panel form-panel">
+        <h2 class="panel__title">Post a New Event</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label class="field__label" for="club">Club Name</label>
+            <input id="club" name="club" class="field__input" type="text" placeholder="Coding Guild" required />
+          </div>
+          <div class="field">
+            <label class="field__label" for="title">Event Title</label>
+            <input id="title" name="title" class="field__input" type="text" placeholder="AI Study Jam" required />
+          </div>
+          <div class="field">
+            <label class="field__label" for="date">Date</label>
+            <input id="date" name="date" class="field__input" type="date" required />
+          </div>
+          <div class="field">
+            <label class="field__label" for="time">Time</label>
+            <input id="time" name="time" class="field__input" type="time" required />
+          </div>
+          <div class="field">
+            <label class="field__label" for="location">Location</label>
+            <input id="location" name="location" class="field__input" type="text" placeholder="Tech Lounge" required />
+          </div>
+          <div class="field field--wide">
+            <label class="field__label" for="description">Description</label>
+            <textarea id="description" name="description" class="field__input field__input--area" rows="3" placeholder="Describe the event" required></textarea>
+          </div>
+          <div class="field field--wide">
+            <label class="field__label" for="tags">Tags</label>
+            <input id="tags" name="tags" class="field__input" type="text" placeholder="tech, ai, coding" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="action" type="submit">Submit for Review</button>
+          <span id="formMessage" class="form-message">Events are reviewed by admin before publishing.</span>
+        </div>
+      </form>
+
+      <div class="panel">
+        <h2 class="panel__title">Your Event Posts</h2>
+        <div id="eventList" class="events__grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="eventmanager.js"></script>
+</body>
+</html>

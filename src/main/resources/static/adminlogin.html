@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UniLink Admin Login</title>
+  <link rel="stylesheet" href="adminlogin.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="hero__glow" aria-hidden="true"></div>
+      <div class="hero__bar">
+        <span class="hero__eyebrow">UniLink Admin</span>
+        <a class="hero__link" href="index.html">Back to Roles</a>
+      </div>
+      <h1 class="hero__title">Admin Login</h1>
+      <p class="hero__subtitle">
+        Securely sign in to review events and manage campus access.
+      </p>
+    </header>
+
+    <section class="login" aria-label="Admin Login">
+      <form id="loginForm" class="login__card">
+        <div class="login__field">
+          <label for="email" class="login__label">Admin Email</label>
+          <input id="email" name="email" type="email" class="login__input" placeholder="admin@srkrec.edu.in" required />
+        </div>
+        <div class="login__field">
+          <label for="password" class="login__label">Password</label>
+          <input id="password" name="password" type="password" class="login__input" placeholder="Enter your password" required />
+        </div>
+        <button class="login__action" type="submit">Login</button>
+        <p id="message" class="login__message" role="status"></p>
+      </form>
+    </section>
+  </main>
+
+  <script src="adminlogin.js"></script>
+</body>
+</html>

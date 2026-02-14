@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UniLink Roles</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="hero__glow" aria-hidden="true"></div>
+      <p class="hero__eyebrow">UniLink</p>
+      <h1 class="hero__title">Choose Your Role</h1>
+      <p class="hero__subtitle">
+        Access the right tools for students, event managers, and admins.
+      </p>
+    </header>
+
+    <section class="roles" aria-label="Roles">
+      <article class="card" data-role="student">
+        <div class="card__badge">Student</div>
+        <h2 class="card__title">Student</h2>
+        <p class="card__text">Discover events, join communities, and build your campus story.</p>
+        <button class="card__action" type="button">Enter Student Portal</button>
+      </article>
+
+      <article class="card" data-role="event">
+        <div class="card__badge">Event Manager</div>
+        <h2 class="card__title">Event Manager</h2>
+        <p class="card__text">Plan, publish, and track campus events with precision.</p>
+        <button class="card__action" type="button">Manage Events</button>
+      </article>
+
+      <article class="card" data-role="admin">
+        <div class="card__badge">Admin</div>
+        <h2 class="card__title">Admin</h2>
+        <p class="card__text">Control access, oversee activity, and keep UniLink secure.</p>
+        <button class="card__action" type="button">Admin Console</button>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span class="footer__status" id="status">Select a role to continue</span>
+    </footer>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>
