@@ -1,27 +1,28 @@
-const STORAGE_KEY = 'unilink.events';
+const API_BASE = '/api';
+const STORAGE_KEY = 'unilink.user';
 
 const form = document.getElementById('eventForm');
 const list = document.getElementById('eventList');
 const summary = document.getElementById('summary');
 const formMessage = document.getElementById('formMessage');
 
-function loadEvents() {
+function getUser() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
+  if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return JSON.parse(raw);
   } catch (error) {
-    return [];
+    return null;
   }
 }
 
-function saveEvents(events) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-}
-
-function createId() {
-  return `evt-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+function ensureEventManager() {
+  const user = getUser();
+  if (!user || user.role !== 'EVENT_MANAGER') {
+    window.location.href = 'eventmanagerlogin.html';
+    return null;
+  }
+  return user;
 }
 
 function formatTags(value) {
@@ -31,7 +32,65 @@ function formatTags(value) {
     .filter(Boolean);
 }
 
-let events = loadEvents();
+function formatDate(dateValue) {
+  if (!dateValue) return '';
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+  return dateValue;
+}
+
+function formatTime(timeValue) {
+  if (!timeValue) return '';
+  const date = new Date(`1970-01-01T${timeValue}`);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+  return timeValue;
+}
+
+function setFormMessage(text) {
+  formMessage.textContent = text;
+}
+
+async function fetchEvents(userId) {
+  const response = await fetch(`${API_BASE}/events?createdById=${userId}`);
+  if (!response.ok) {
+    throw new Error('Unable to load events.');
+  }
+  return response.json();
+}
+
+async function createEvent(payload) {
+  const response = await fetch(`${API_BASE}/events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    throw new Error('Unable to submit event.');
+  }
+  return response.json();
+}
+
+async function removeEvent(id, userId) {
+  const response = await fetch(`${API_BASE}/events/${id}?requesterId=${userId}`, {
+    method: 'DELETE'
+  });
+  if (!response.ok) {
+    throw new Error('Unable to remove event.');
+  }
+}
+
+let events = [];
 
 function render() {
   list.innerHTML = '';
@@ -41,13 +100,13 @@ function render() {
     return;
   }
 
-  const pendingCount = events.filter((event) => event.status === 'pending').length;
-  const publishedCount = events.filter((event) => event.status === 'published').length;
+  const pendingCount = events.filter((event) => event.status === 'PENDING').length;
+  const publishedCount = events.filter((event) => event.status === 'PUBLISHED').length;
   summary.textContent = `${events.length} events · ${pendingCount} pending · ${publishedCount} published`;
 
   events
     .slice()
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .forEach((event) => {
       const card = document.createElement('article');
       card.className = 'event-card';
@@ -56,15 +115,15 @@ function render() {
         .map((tag) => `<span class="tag">${tag}</span>`)
         .join('');
 
-      const statusLabel = event.status === 'published' ? 'Published' : 'Pending Review';
-      const statusClass = event.status === 'published' ? 'status is-published' : 'status';
+      const statusLabel = event.status === 'PUBLISHED' ? 'Published' : 'Pending Review';
+      const statusClass = event.status === 'PUBLISHED' ? 'status is-published' : 'status';
 
       card.innerHTML = `
         <div class="event-card__club">${event.club}</div>
         <h3 class="event-card__title">${event.title}</h3>
         <div class="event-card__meta">
-          <span>${event.date}</span>
-          <span>${event.time}</span>
+          <span>${formatDate(event.date)}</span>
+          <span>${formatTime(event.time)}</span>
           <span>${event.location}</span>
         </div>
         <p class="event-card__desc">${event.description}</p>
@@ -79,18 +138,21 @@ function render() {
     });
 }
 
-function setFormMessage(text) {
-  formMessage.textContent = text;
+async function refresh(userId) {
+  events = await fetchEvents(userId);
+  render();
 }
 
-form.addEventListener('submit', (event) => {
+form.addEventListener('submit', async (event) => {
   event.preventDefault();
+
+  const user = ensureEventManager();
+  if (!user) return;
 
   const formData = new FormData(form);
   const data = Object.fromEntries(formData.entries());
 
   const newEvent = {
-    id: createId(),
     club: data.club.trim(),
     title: data.title.trim(),
     date: data.date,
@@ -98,8 +160,7 @@ form.addEventListener('submit', (event) => {
     location: data.location.trim(),
     description: data.description.trim(),
     tags: data.tags ? formatTags(data.tags) : [],
-    status: 'pending',
-    createdAt: Date.now()
+    createdById: user.id
   };
 
   if (!newEvent.club || !newEvent.title || !newEvent.date || !newEvent.time || !newEvent.location || !newEvent.description) {
@@ -107,22 +168,41 @@ form.addEventListener('submit', (event) => {
     return;
   }
 
-  events = [newEvent, ...events];
-  saveEvents(events);
-  form.reset();
-  setFormMessage('Event submitted for admin review.');
-  render();
-});
-
-list.addEventListener('click', (event) => {
-  const button = event.target.closest('button[data-action]');
-  if (!button) return;
-  const id = button.dataset.id;
-  if (button.dataset.action === 'remove') {
-    events = events.filter((item) => item.id !== id);
-    saveEvents(events);
-    render();
+  try {
+    await createEvent(newEvent);
+    form.reset();
+    setFormMessage('Event submitted for admin review.');
+    await refresh(user.id);
+  } catch (error) {
+    setFormMessage(error.message);
   }
 });
 
-render();
+list.addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-action]');
+  if (!button) return;
+  const user = ensureEventManager();
+  if (!user) return;
+
+  if (button.dataset.action === 'remove') {
+    try {
+      await removeEvent(button.dataset.id, user.id);
+      await refresh(user.id);
+    } catch (error) {
+      setFormMessage(error.message);
+    }
+  }
+});
+
+async function init() {
+  const user = ensureEventManager();
+  if (!user) return;
+  try {
+    await refresh(user.id);
+  } catch (error) {
+    list.innerHTML = '<p class="empty">Unable to load events right now.</p>';
+    summary.textContent = '0 events';
+  }
+}
+
+init();

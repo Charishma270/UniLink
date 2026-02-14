@@ -1,25 +1,73 @@
-const STORAGE_KEY = 'unilink.events';
+const API_BASE = '/api';
+const STORAGE_KEY = 'unilink.user';
 
 const pendingList = document.getElementById('pendingList');
 const recentList = document.getElementById('recentList');
 const summary = document.getElementById('summary');
 
-function loadEvents() {
+function getUser() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
+  if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return JSON.parse(raw);
   } catch (error) {
-    return [];
+    return null;
   }
 }
 
-function saveEvents(events) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+function ensureAdmin() {
+  const user = getUser();
+  if (!user || user.role !== 'ADMIN') {
+    window.location.href = 'adminlogin.html';
+    return null;
+  }
+  return user;
 }
 
-let events = loadEvents();
+async function fetchEvents(status) {
+  const response = await fetch(`${API_BASE}/events?status=${status}`);
+  if (!response.ok) {
+    throw new Error('Unable to load events.');
+  }
+  return response.json();
+}
+
+async function updateStatus(id, status) {
+  const response = await fetch(`${API_BASE}/events/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  if (!response.ok) {
+    throw new Error('Unable to update status.');
+  }
+  return response.json();
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) return '';
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+  return dateValue;
+}
+
+function formatTime(timeValue) {
+  if (!timeValue) return '';
+  const date = new Date(`1970-01-01T${timeValue}`);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+  return timeValue;
+}
 
 function formatTags(tags) {
   return (tags || []).map((tag) => `<span class="tag">${tag}</span>`).join('');
@@ -43,14 +91,14 @@ function renderList(target, list, showActions) {
           <button class="action action--reject" data-action="reject" data-id="${event.id}">Reject</button>
         </div>
       `
-      : `<span class="status${event.status === 'rejected' ? ' is-rejected' : ''}">${event.status}</span>`;
+      : `<span class="status${event.status === 'REJECTED' ? ' is-rejected' : ''}">${event.status}</span>`;
 
     card.innerHTML = `
       <div class="event-card__club">${event.club}</div>
       <h3 class="event-card__title">${event.title}</h3>
       <div class="event-card__meta">
-        <span>${event.date}</span>
-        <span>${event.time}</span>
+        <span>${formatDate(event.date)}</span>
+        <span>${formatTime(event.time)}</span>
         <span>${event.location}</span>
       </div>
       <p class="event-card__desc">${event.description}</p>
@@ -62,10 +110,10 @@ function renderList(target, list, showActions) {
   });
 }
 
-function render() {
-  const pending = events.filter((event) => event.status === 'pending');
-  const published = events.filter((event) => event.status === 'published');
-  const rejected = events.filter((event) => event.status === 'rejected');
+async function refresh() {
+  const pending = await fetchEvents('PENDING');
+  const published = await fetchEvents('PUBLISHED');
+  const rejected = await fetchEvents('REJECTED');
 
   summary.textContent = `${pending.length} pending · ${published.length} published · ${rejected.length} rejected`;
   renderList(pendingList, pending, true);
@@ -73,25 +121,30 @@ function render() {
   renderList(recentList, recent, false);
 }
 
-pendingList.addEventListener('click', (event) => {
+pendingList.addEventListener('click', async (event) => {
   const button = event.target.closest('button[data-action]');
   if (!button) return;
+  ensureAdmin();
   const id = button.dataset.id;
   const action = button.dataset.action;
 
-  events = events.map((item) => {
-    if (item.id !== id) return item;
-    if (action === 'approve') {
-      return { ...item, status: 'published' };
-    }
-    if (action === 'reject') {
-      return { ...item, status: 'rejected' };
-    }
-    return item;
-  });
-
-  saveEvents(events);
-  render();
+  try {
+    await updateStatus(id, action === 'approve' ? 'PUBLISHED' : 'REJECTED');
+    await refresh();
+  } catch (error) {
+    // Ignore for now
+  }
 });
 
-render();
+async function init() {
+  if (!ensureAdmin()) return;
+  try {
+    await refresh();
+  } catch (error) {
+    pendingList.innerHTML = '<p class="empty">Unable to load events right now.</p>';
+    recentList.innerHTML = '<p class="empty">Unable to load events right now.</p>';
+    summary.textContent = '0 pending';
+  }
+}
+
+init();
